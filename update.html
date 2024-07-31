@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        .reset-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        .reset-container h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-group input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="reset-container">
+        <h2>Reset Password</h2>
+        <form id="resetPasswordForm">
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" name="newPassword" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+            </div>
+            <button type="submit" class="btn">Reset Password</button>
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            const APIKEY = "66a0e1ef123094ba23859e6b";  // Replace with your actual API key
+            let loggedInEmail = localStorage.getItem("loggedInEmail");  // Retrieve the email from local storage
+
+            if (!loggedInEmail) {
+                alert("No logged in user found.");
+                window.location.href = "login.html";  // Redirect to login page if no email is found
+            }
+
+            $('#resetPasswordForm').on('submit', function(event) {
+                event.preventDefault();
+                
+                var newPassword = $('#newPassword').val();
+                var confirmPassword = $('#confirmPassword').val();
+                
+                if (newPassword !== confirmPassword) {
+                    alert("Passwords do not match!");
+                    return;
+                }
+
+                // Fetch the user ID or the user record from the database based on the logged-in email
+                $.ajax({
+                    "async": true,
+                    "crossDomain": true,
+                    "url": "https://dscploginpage-9024.restdb.io/rest/login?q={\"email\":\"" + loggedInEmail + "\"}",
+                    "method": "GET",
+                    "headers": {
+                        "content-type": "application/json",
+                        "x-apikey": APIKEY,
+                        "cache-control": "no-cache"
+                    }
+                }).done(function(response) {
+                    if (response.length > 0) {
+                        var userId = response[0]._id;  // Assuming the first match is the correct user
+
+                        var jsondata = {
+                            "email": loggedInEmail,
+                            "colour": response[0].colour,
+                            "password": newPassword
+                        };
+
+                        var settings = {
+                            "async": true,
+                            "crossDomain": true,
+                            "url": "https://dscploginpage-9024.restdb.io/rest/login/" + userId, // Use the user ID to update the record
+                            "method": "PUT",
+                            "headers": {
+                                "content-type": "application/json",
+                                "x-apikey": APIKEY,
+                                "cache-control": "no-cache"
+                            },
+                            "processData": false,
+                            "data": JSON.stringify(jsondata)
+                        };
+
+                        $.ajax(settings).done(function (response) {
+                            console.log(response);
+                            alert("Password has been reset successfully!");
+                            window.location.href = "login.html";
+                        }).fail(function (jqXHR, textStatus, errorThrown) {
+                            console.error("Error resetting password: ", textStatus, errorThrown);
+                            alert("Error resetting password. Please try again.");
+                        });
+                    } else {
+                        alert("User not found.");
+                        window.location.href = "login.html";
+                    }
+                });
+            });
+        });
+
+    </script>
+</body>
+</html>
